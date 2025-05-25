@@ -10,7 +10,10 @@ globalThis.__BUILD_MANIFEST = {
     "static/chunks/fallback/amp.js"
   ],
   "lowPriorityFiles": [],
-  "rootMainFiles": [],
+  "rootMainFiles": [
+    "static/chunks/fallback/webpack.js",
+    "static/chunks/fallback/main-app.js"
+  ],
   "rootMainFilesTree": {},
   "pages": {
     "/_app": [
