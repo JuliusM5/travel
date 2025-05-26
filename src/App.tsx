@@ -1,24 +1,70 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import { Navigation } from './components/common/Navigation';
+import { Layout } from './components/common/Layout';
+import { Dashboard } from './pages/Dashboard';
+import { TripDetails } from './pages/TripDetails';
+import { Alerts } from './pages/Alerts';
+import { Profile } from './pages/Profile';
+import { Trip, PriceAlert, User } from './store/types';
+import { initialUser } from './store/useStore';
 
 function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [alerts, setAlerts] = useState<PriceAlert[]>([]);
+  const [user, setUser] = useState<User>(initialUser);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+
+  const renderContent = () => {
+    if (selectedTrip && activeTab === 'dashboard') {
+      return (
+        <TripDetails
+          trip={selectedTrip}
+          onBack={() => setSelectedTrip(null)}
+          onUpdateTrip={(updatedTrip: Trip) => {
+            setTrips(trips.map(t => t.id === updatedTrip.id ? updatedTrip : t));
+            setSelectedTrip(updatedTrip);
+          }}
+        />
+      );
+    }
+
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <Dashboard
+            trips={trips}
+            setTrips={setTrips}
+            onSelectTrip={setSelectedTrip}
+          />
+        );
+      case 'alerts':
+        return (
+          <Alerts
+            alerts={alerts}
+            setAlerts={setAlerts}
+            user={user}
+            setUser={setUser}
+          />
+        );
+      case 'profile':
+        return (
+          <Profile
+            user={user}
+            setUser={setUser}
+          />
+        );
+      default:
+        return <Dashboard trips={trips} setTrips={setTrips} onSelectTrip={setSelectedTrip} />;
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="min-h-screen bg-gray-50">
+      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
+      <Layout>
+        {renderContent()}
+      </Layout>
     </div>
   );
 }
