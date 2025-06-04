@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, TrendingDown } from 'lucide-react';
+import { X, TrendingDown, BarChart3 } from 'lucide-react';
 import { PriceAlert } from '../../store/types';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 
@@ -7,9 +7,15 @@ interface PriceAlertCardProps {
   alert: PriceAlert;
   onCheck: (id: string) => void;
   onDelete: (id: string) => void;
+  onShowHistory?: (origin: string, destination: string) => void;
 }
 
-export const PriceAlertCard: React.FC<PriceAlertCardProps> = ({ alert, onCheck, onDelete }) => {
+export const PriceAlertCard: React.FC<PriceAlertCardProps> = ({ 
+  alert, 
+  onCheck, 
+  onDelete,
+  onShowHistory 
+}) => {
   const priceChange = ((alert.currentPrice - alert.targetPrice) / alert.targetPrice) * 100;
   const isGoodDeal = alert.currentPrice <= alert.targetPrice;
 
@@ -59,13 +65,24 @@ export const PriceAlertCard: React.FC<PriceAlertCardProps> = ({ alert, onCheck, 
         </div>
       </div>
       
-      <button
-        onClick={() => onCheck(alert.id)}
-        className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors font-semibold flex items-center justify-center gap-2"
-      >
-        <TrendingDown className="w-4 h-4" />
-        Check Latest Price
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={() => onCheck(alert.id)}
+          className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors font-semibold flex items-center justify-center gap-2"
+        >
+          <TrendingDown className="w-4 h-4" />
+          Check Price
+        </button>
+        {onShowHistory && (
+          <button
+            onClick={() => onShowHistory(alert.origin, alert.destination)}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-semibold flex items-center justify-center gap-2"
+          >
+            <BarChart3 className="w-4 h-4" />
+            History
+          </button>
+        )}
+      </div>
     </div>
   );
 };

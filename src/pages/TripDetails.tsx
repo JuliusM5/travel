@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, DollarSign, Share2, Plus, Clock, TrendingDown } from 'lucide-react';
+import { Calendar, MapPin, DollarSign, Share2, Plus, Clock, TrendingDown, Download, FileText, ExternalLink } from 'lucide-react';
 import { Trip, Activity } from '../store/types';
 import { formatDate, formatCurrency } from '../utils/formatters';
 import { getDaysBetween, generateId } from '../utils/helpers';
 import { ActivityForm } from '../components/itinerary/ActivityForm';
 import { ActivityList } from '../components/itinerary/ActivityList';
 import { DaySelector } from '../components/itinerary/DaySelector';
+import { exportService } from '../services/exportService';
 
 interface TripDetailsProps {
   trip: Trip;
@@ -17,6 +18,7 @@ export const TripDetails: React.FC<TripDetailsProps> = ({ trip, onBack, onUpdate
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [selectedDay, setSelectedDay] = useState(1);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const days = getDaysBetween(trip.startDate, trip.endDate);
   const dayNumbers = Array.from({ length: days }, (_, i) => i + 1);
@@ -67,6 +69,31 @@ export const TripDetails: React.FC<TripDetailsProps> = ({ trip, onBack, onUpdate
     }
   };
 
+  const handleExportCalendar = () => {
+    exportService.downloadICalendar(trip);
+    setShowExportMenu(false);
+  };
+
+  const handleExportGoogle = () => {
+    const url = exportService.generateGoogleCalendarUrl(trip);
+    window.open(url, '_blank');
+    setShowExportMenu(false);
+  };
+
+  const handleExportPDF = () => {
+    exportService.downloadPDF(trip);
+    setShowExportMenu(false);
+  };
+
+  const handleShare = async () => {
+    const shared = await exportService.shareTrip(trip);
+    if (!shared) {
+      // Fallback: copy link to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      alert('Trip link copied to clipboard!');
+    }
+  };
+
   const activitiesForDay = trip.activities
     .filter(a => a.day === selectedDay)
     .sort((a, b) => a.time.localeCompare(b.time));
@@ -94,9 +121,48 @@ export const TripDetails: React.FC<TripDetailsProps> = ({ trip, onBack, onUpdate
               {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
             </p>
           </div>
-          <button className="absolute top-6 right-6 bg-white/20 backdrop-blur-sm text-white p-3 rounded-lg hover:bg-white/30 transition-colors">
-            <Share2 className="w-5 h-5" />
-          </button>
+          <div className="absolute top-6 right-6 flex gap-2">
+            <button 
+              onClick={handleShare}
+              className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-lg hover:bg-white/30 transition-colors"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-lg hover:bg-white/30 transition-colors"
+              >
+                <Download className="w-5 h-5" />
+              </button>
+              
+              {showExportMenu && (
+                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-10">
+                  <button
+                    onClick={handleExportCalendar}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Calendar className="w-4 h-4 text-gray-600" />
+                    Export to Calendar
+                  </button>
+                  <button
+                    onClick={handleExportGoogle}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <ExternalLink className="w-4 h-4 text-gray-600" />
+                    Add to Google Calendar
+                  </button>
+                  <button
+                    onClick={handleExportPDF}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <FileText className="w-4 h-4 text-gray-600" />
+                    Download PDF
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         
         <div className="p-6">

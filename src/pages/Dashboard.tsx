@@ -1,20 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, MapPin } from 'lucide-react';
 import { Trip } from '../store/types';
 import { TripList } from '../components/trips/TripList';
 import { TripForm } from '../components/trips/TripForm';
 import { generateId } from '../utils/helpers';
+import { achievementService, Achievement } from '../services/achievementService';
 
 interface DashboardProps {
   trips: Trip[];
   setTrips: (trips: Trip[]) => void;
   onSelectTrip: (trip: Trip) => void;
+  onAchievement?: (achievement: Achievement) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ trips, setTrips, onSelectTrip }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ trips, setTrips, onSelectTrip, onAchievement }) => {
   const [showTripForm, setShowTripForm] = useState(false);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Track trip stats for achievements
+  useEffect(() => {
+    const stats = achievementService.getStats();
+    if (stats.tripsPlanned !== trips.length) {
+      achievementService.updateStats({ tripsPlanned: trips.length });
+      
+      // Check for newly unlocked achievements
+      const achievements = achievementService.getAchievements();
+      const newlyUnlocked = achievements.filter(a => 
+        a.unlocked && 
+        a.unlockedAt && 
+        new Date(a.unlockedAt).getTime() > Date.now() - 1000
+      );
+      
+      newlyUnlocked.forEach(achievement => {
+        if (onAchievement) {
+          onAchievement(achievement);
+        }
+      });
+    }
+  }, [trips.length, onAchievement]);
 
   const handleCreateTrip = (tripData: any) => {
     const newTrip: Trip = {
